@@ -884,8 +884,8 @@
           : `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
         // NÃO compartilha/open automático no submit (o await derruba o gesto e o popup é bloqueado).
         // Fluxo em 2 toques: 1) botão verde compartilha o DOC em tabela; 2) link abre WhatsApp com a mensagem.
-        let shared = false,
-          shareErr = "";
+        // Tenta msg de olá + DOC juntos: files + text (vira legenda no WhatsApp em muito celular).
+        // Se o navegador rejeitar o combo, tenta só files.
         const tryShare = async () => {
           if (!fileToShare) {
             shareErr = `sem suporte a arquivo (canShare=${!!navigator.canShare}). No PC use Baixar .doc + anexar manual. No celular abra em HTTPS.`;
@@ -895,15 +895,31 @@
             await navigator.share({
               files: [fileToShare],
               title: `Ficha ${title} - ${nome}`,
+              text: msgText,
             });
+            shareErr = "";
             return true;
-          } catch (err) {
-            shareErr =
-              ((err && err.name) || "erro") +
-              ": " +
-              ((err && err.message) || "");
-            console.warn(err);
-            return false;
+          } catch (err1) {
+            // combo rejeitado ou cancelado — tenta só o arquivo
+            if (err1 && err1.name === "AbortError") {
+              shareErr = "compartilhamento cancelado";
+              return false;
+            }
+            try {
+              await navigator.share({
+                files: [fileToShare],
+                title: `Ficha ${title} - ${nome}`,
+              });
+              shareErr = "enviado sem legenda (navegador barrou texto+arquivo) — use o botão 2 p/ mandar a msg";
+              return true;
+            } catch (err) {
+              shareErr =
+                ((err && err.name) || "erro") +
+                ": " +
+                ((err && err.message) || "");
+              console.warn(err1, err);
+              return false;
+            }
           }
         };
         const doDownload = async () => {
@@ -922,7 +938,7 @@
         };
         $("#done").innerHTML =
           `<div class="card"><h2>Ficha pronta — envie em 2 toques ✓</h2>
-  <div class="msg ok"><b>Passo 1:</b> toque no botão verde para enviar o <b>DOC em tabela (${esc(fileToShare ? fileToShare.name : fname)})</b> pelo WhatsApp.<br><b>Passo 2:</b> toque em <b>Enviar mensagem</b> para abrir a conversa com o texto pronto.</div>
+  <div class="msg ok"><b>Passo 1:</b> toque no botão verde para enviar o <b>DOC em tabela (${esc(fileToShare ? fileToShare.name : fname)}) + msg de olá</b> pelo WhatsApp (a msg vai como legenda quando o celular permite).<br><b>Passo 2:</b> se a legenda não for, toque em <b>2. Enviar mensagem</b>.</div>
   <div class="msg"><b>Mensagem que vai junto:</b><br>${esc(msgText).replace(/\n/g, "<br>")}</div>
   <button class="btn wa" id="share">1. Enviar DOC em tabela</button><a class="btn wa" id="sendMsg" href="${wa}" target="_blank" rel="noopener">2. Enviar mensagem</a><button class="btn alt" id="dl">Baixar .doc</button><button class="btn alt" id="cp">Copiar mensagem</button>
   <details open><summary>Ver respostas em tabela</summary>${secs.map((s) => `<h3 style="color:var(--acc);margin:12px 0 4px">${esc(s[0])}</h3>${rowsToTable(s[1])}`).join("")}</details><p class="note">Diagnóstico: ${esc(fileToShare ? "pronto p/ compartilhar: " + fileToShare.name : shareErr || "sem arquivo")} · salvos no app: ${saved ? "sim" : "não"}</p></div>`;
@@ -930,11 +946,13 @@
         $("#share").onclick = async () => {
           const ok = await tryShare();
           if (ok) {
-            $("#share").textContent =
-              "DOC compartilhado ✓ — agora toque em 2. Enviar mensagem";
-            try {
-              await navigator.clipboard.writeText(msgText);
-            } catch {}
+            $("#share").textContent = "DOC + msg compartilhados ✓";
+            if (shareErr) alert(shareErr);
+            else {
+              try {
+                await navigator.clipboard.writeText(msgText);
+              } catch {}
+            }
           } else {
             alert(
               "Não deu p/ anexar automático: " +
