@@ -205,6 +205,11 @@
         color: var(--bl);
         border: 2px solid var(--bl);
       }
+      .btn.alt-wa {
+        background: transparent;
+        color: #1a9c4a;
+        border: 2px solid #1a9c4a;
+      }
       .btn.wa {
         background: #1a9c4a;
       }
@@ -259,7 +264,7 @@
           Campos com <span class="req">*</span> são obrigatórios. Seus dados são
           usados apenas para o atendimento no projeto Movi.
         </p>
-        <button class="btn wa" type="submit">Enviar pelo WhatsApp</button>
+        <button class="btn" type="submit">Enviar</button>
       </form>
       <div id="done"></div>
       <div id="adm"></div>
@@ -735,8 +740,11 @@
             .slice(0, 40) || "ficha"
         );
       }
+      function buildMsg(title, nome, data) {
+        return `Olá, equipe Movi! Segue minha ficha ${title} preenchida.%0A%0ANome: ${nome}%0AData: ${data}%0A%0AAs respostas completas vão no arquivo em anexo (tabela). Obrigado!`;
+      }
       function buildMsgText(title, nome, data) {
-        return `Olá, equipe Movi! Segue minha ficha ${title} preenchida.`;
+        return `Olá, equipe Movi! Segue minha ficha ${title} preenchida.\n\nNome: ${nome}\nData: ${data}\n\nAs respostas completas vão no arquivo em anexo (tabela). Obrigado!`;
       }
       function sectionsWithValues() {
         // [[tituloSecao, [[rotulo, valor]]]]
@@ -860,85 +868,97 @@
         const docHtml = buildDoc(title, nome, data, secs, msgText),
           blob = new Blob(["﻿" + docHtml], { type: "application/msword" }),
           fname = `ficha-movi-${K}-${safeName(nome)}.doc`;
-        // Envio só do DOC em tabela via share (files puro, sem texto junto).
-        // Chamada síncrona dentro do clique, tentativa única.
+        // .txt tem compatibilidade maior com canShare em celular; mantém .doc p/ download — ambos com msg + tabela/respostas
+        const txtBlob = new Blob([waText], { type: "text/plain" }),
+          txtFname = fname.replace(/\.doc$/i, ".txt"),
+          txtFile = new File([txtBlob], txtFname, { type: "text/plain" });
         const docFile = new File([blob], fname, {
           type: "application/msword",
         });
+        // prefere .txt (aceito em mais celulares), senão .doc
         let fileToShare = null;
         try {
-          if (navigator.canShare && navigator.canShare({ files: [docFile] }))
-            fileToShare = docFile;
-        } catch {}
-        let shareErr = "";
-        const doShareSync = (onOk, onFail) => {
-          if (!fileToShare) {
-            shareErr = `este navegador não suporta envio de arquivo. Use Baixar .doc e anexe manual no WhatsApp.`;
-            onFail && onFail();
-            return;
+          if (navigator.canShare) {
+            if (navigator.canShare({ files: [txtFile] })) fileToShare = txtFile;
+            else if (navigator.canShare({ files: [docFile] }))
+              fileToShare = docFile;
           }
-          let p;
+        } catch {}
+        const wa = WHATS
+          ? `https://wa.me/${WHATS}?text=${encodeURIComponent(waText)}`
+          : `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
+        // 1) Tenta enviar o arquivo direto pelo compartilhamento (só funciona em celular + HTTPS/localhost, com gesto do usuário)
+        // OBS: não envia text junto com files (alguns Chrome/Safari rejeitam) — só files + title
+        let shared = false,
+          shareErr = "";
+        const tryShare = async () => {
+          if (!fileToShare) {
+            shareErr = `sem suporte: canShare=${!!navigator.canShare} share=${!!navigator.share} (abra em HTTPS no celular)`;
+            return false;
+          }
           try {
-            p = navigator.share({
+            await navigator.share({
               files: [fileToShare],
               title: `Ficha ${title} - ${nome}`,
             });
+            return true;
           } catch (err) {
             shareErr =
               ((err && err.name) || "erro") +
               ": " +
               ((err && err.message) || "");
+            if (err && err.name === "AbortError") return false; // cancelado, não é sucesso
             console.warn(err);
-            onFail && onFail();
-            return;
-          }
-          if (p && p.then) {
-            p.then(() => {
-              shareErr = "";
-              onOk && onOk();
-            }).catch((err) => {
-              shareErr =
-                ((err && err.name) || "erro") +
-                ": " +
-                ((err && err.message) || "");
-              console.warn(err);
-              onFail && onFail();
-            });
-          } else {
-            onOk && onOk();
+            return false;
           }
         };
-        const doDownload = () => {
+        shared = await tryShare();
+        // 2) Fallback PC/navegador sem share de arquivos: abre WhatsApp com texto (não dá p/ anexar via link)
+        if (!shared) {
           try {
-            downloadBlob(blob, fname);
+            window.open(wa, "_blank", "noopener");
           } catch {}
+        }
+        const doDownload = async () => {
           try {
             if (typeof claude !== "undefined") {
-              claude.use("downloads").then((dls) => {
-                if (dls) dls.save({ filename: fname, data: docHtml });
-              });
+              const dls = await claude.use("downloads");
+              if (dls) {
+                await dls.save({ filename: fname, data: docHtml });
+                return;
+              }
             }
-          } catch {}
+            downloadBlob(blob, fname);
+          } catch {
+            downloadBlob(blob, fname);
+          }
         };
         $("#done").innerHTML =
-          `<div class="card"><h2>Ficha pronta ✓</h2>
-  <div class="msg ok">Toque no botão verde para enviar o <b>DOC em tabela (${esc(fname)})</b> — escolha o WhatsApp na lista.</div>
-  <button class="btn wa" id="share">Enviar DOC</button><button class="btn alt" id="dl">Baixar .doc</button>
-  <details close><summary>Ver respostas em tabela</summary>${secs.map((s) => `<h3 style="color:var(--acc);margin:12px 0 4px">${esc(s[0])}</h3>${rowsToTable(s[1])}`).join("")}</details><p class="note">Arquivo: ${esc(fname)} · salvos no app: ${saved ? "sim" : "não"}</p></div>`;
+          `<div class="card"><h2>${shared || saved ? "Ficha enviada! ✓" : "Enviar ficha pelo WhatsApp"}</h2>
+  <div class="msg ok">${shared ? `Documento <b>${esc(fileToShare ? fileToShare.name : fname)}</b> compartilhado de <b>${esc(nome)}</b>. Escolha o WhatsApp na lista.` : `Não foi possível anexar automaticamente (${esc(shareErr || "navegador sem share de arquivos")}).<br>No <b>celular com HTTPS</b> o botão verde anexa o arquivo. No <b>PC / arquivo local file://</b> só vai texto — baixe e anexe manualmente.`}</div>
+  <div class="msg"><b>Mensagem que vai junto:</b><br>${esc(msgText).replace(/\n/g, "<br>")}</div>
+  <button class="btn wa" id="share">Enviar pelo WhatsApp</button><a class="btn alt-wa" href="${wa}" target="_blank" rel="noopener">Abrir WhatsApp (só texto)</a><button class="btn alt" id="dl">Baixar .doc</button><button class="btn alt" id="cp">Copiar</button>
+  <details close><summary>Ver respostas em tabela</summary>${secs.map((s) => `<h3 style="color:var(--acc);margin:12px 0 4px">${esc(s[0])}</h3>${rowsToTable(s[1])}`).join("")}</details><p class="note">Diagnóstico: ${esc(shareErr || (shared ? "compartilhado" : "sem erro"))} · arquivo: ${esc(fileToShare ? fileToShare.name + " (" + fileToShare.type + ")" : "nenhum suportado")}</p></div>`;
         $("#done").scrollIntoView({ behavior: "smooth" });
-        $("#share").onclick = () => {
-          doShareSync(
-            () => {
-              $("#share").textContent = "DOC compartilhado ✓";
-            },
-            () => {
-              alert(
-                "Não deu p/ enviar automático: " +
-                  shareErr +
-                  "\nToque em Baixar .doc e anexe manual no WhatsApp.",
-              );
-            },
-          );
+        $("#share").onclick = async () => {
+          if (await tryShare()) {
+            $("#share").textContent = "Compartilhado ✓";
+          } else if (!fileToShare) {
+            alert(
+              "Este navegador/PC não suporta envio de arquivo. Abra o link em HTTPS no celular. Abrindo WhatsApp com texto...",
+            );
+            window.open(wa, "_blank", "noopener");
+          } else {
+            alert("Não compartilhou: " + shareErr);
+          }
+        };
+        $("#cp").onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(waText);
+            $("#cp").textContent = "Copiado ✓";
+          } catch {
+            $("#cp").textContent = "Selecione o resumo e copie";
+          }
         };
         $("#dl").onclick = doDownload;
       });
