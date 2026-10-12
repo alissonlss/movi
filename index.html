@@ -860,34 +860,20 @@
         const docHtml = buildDoc(title, nome, data, secs, msgText),
           blob = new Blob(["﻿" + docHtml], { type: "application/msword" }),
           fname = `ficha-movi-${K}-${safeName(nome)}.doc`;
-        // .txt tem compatibilidade maior com canShare em celular; mantém .doc p/ download — ambos com msg + tabela/respostas
-        const txtBlob = new Blob([waText], { type: "text/plain" }),
-          txtFname = fname.replace(/\.doc$/i, ".txt"),
-          txtFile = new File([txtBlob], txtFname, { type: "text/plain" });
+        // Envio só do DOC em tabela via share (files puro, sem texto junto).
+        // Chamada síncrona dentro do clique, tentativa única.
         const docFile = new File([blob], fname, {
           type: "application/msword",
         });
-        // DOC em tabela é o principal — tenta .doc primeiro, .txt só de fallback
         let fileToShare = null;
         try {
-          if (navigator.canShare) {
-            if (navigator.canShare({ files: [docFile] })) fileToShare = docFile;
-            else if (navigator.canShare({ files: [txtFile] }))
-              fileToShare = txtFile;
-          }
+          if (navigator.canShare && navigator.canShare({ files: [docFile] }))
+            fileToShare = docFile;
         } catch {}
-        // Opção 2: msg COMPLETA (msg curta + todas as respostas) via link do WhatsApp
-        const wa = WHATS
-          ? `https://wa.me/${WHATS}?text=${encodeURIComponent(waText)}`
-          : `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
-        // Opção 1: DOC em tabela via share com files PURO (sem text: o combo texto+arquivo
-        // dá Permission denied em vários Chrome Android, como no seu print).
-        // A msg curta é copiada p/ área de transferência no sucesso: cole como legenda no WhatsApp.
-        // Chamada síncrona dentro do clique, tentativa única (retry pós-await perde o gesto -> NotAllowedError).
         let shareErr = "";
         const doShareSync = (onOk, onFail) => {
           if (!fileToShare) {
-            shareErr = `sem suporte a arquivo neste navegador. No PC use Baixar .doc + anexar manual. No celular abra em HTTPS.`;
+            shareErr = `este navegador não suporta envio de arquivo. Use Baixar .doc e anexe manual no WhatsApp.`;
             onFail && onFail();
             return;
           }
@@ -922,54 +908,37 @@
             onOk && onOk();
           }
         };
-        const doDownload = async () => {
+        const doDownload = () => {
+          try {
+            downloadBlob(blob, fname);
+          } catch {}
           try {
             if (typeof claude !== "undefined") {
-              const dls = await claude.use("downloads");
-              if (dls) {
-                await dls.save({ filename: fname, data: docHtml });
-                return;
-              }
+              claude.use("downloads").then((dls) => {
+                if (dls) dls.save({ filename: fname, data: docHtml });
+              });
             }
-            downloadBlob(blob, fname);
-          } catch {
-            downloadBlob(blob, fname);
-          }
+          } catch {}
         };
         $("#done").innerHTML =
-          `<div class="card"><h2>Ficha pronta — envie em 2 toques ✓</h2>
-  <div class="msg ok"><b>Opção 1:</b> <b>DOC em tabela (${esc(fileToShare ? fileToShare.name : fname)})</b> — a msg curta é copiada junto, cole como legenda no WhatsApp.<br><b>Opção 2:</b> msg <b>completa</b> com todas as respostas, sem arquivo.</div>
-  <div class="msg"><b>Opção 1 (curta, vai copiada):</b><br>${esc(msgText)}</div>
-  <button class="btn wa" id="share">1. Enviar DOC + msg curta</button><a class="btn wa" id="sendMsg" href="${wa}" target="_blank" rel="noopener">2. Enviar msg completa</a><button class="btn alt" id="dl">Baixar .doc</button><button class="btn alt" id="cp">Copiar completa</button>
-  <details close><summary>Ver respostas em tabela</summary>${secs.map((s) => `<h3 style="color:var(--acc);margin:12px 0 4px">${esc(s[0])}</h3>${rowsToTable(s[1])}`).join("")}</details><p class="note">Diagnóstico: ${esc(fileToShare ? "pronto p/ compartilhar: " + fileToShare.name : shareErr || "sem arquivo")} · salvos no app: ${saved ? "sim" : "não"}</p></div>`;
+          `<div class="card"><h2>Ficha pronta ✓</h2>
+  <div class="msg ok">Toque no botão verde para enviar o <b>DOC em tabela (${esc(fname)})</b> — escolha o WhatsApp na lista.</div>
+  <button class="btn wa" id="share">Enviar DOC</button><button class="btn alt" id="dl">Baixar .doc</button>
+  <details close><summary>Ver respostas em tabela</summary>${secs.map((s) => `<h3 style="color:var(--acc);margin:12px 0 4px">${esc(s[0])}</h3>${rowsToTable(s[1])}`).join("")}</details><p class="note">Arquivo: ${esc(fname)} · salvos no app: ${saved ? "sim" : "não"}</p></div>`;
         $("#done").scrollIntoView({ behavior: "smooth" });
         $("#share").onclick = () => {
           doShareSync(
             () => {
-              $("#share").textContent = "DOC compartilhado ✓ — cole a msg curta como legenda";
-              try {
-                navigator.clipboard.writeText(msgText);
-              } catch {}
-              alert(
-                "DOC enviado! A msg curta foi copiada — no WhatsApp, cole como legenda do documento.",
-              );
+              $("#share").textContent = "DOC compartilhado ✓";
             },
             () => {
               alert(
-                "Não deu p/ anexar automático: " +
+                "Não deu p/ enviar automático: " +
                   shareErr +
                   "\nToque em Baixar .doc e anexe manual no WhatsApp.",
               );
             },
           );
-        };
-        $("#cp").onclick = async () => {
-          try {
-            await navigator.clipboard.writeText(waText);
-            $("#cp").textContent = "Copiado ✓";
-          } catch {
-            $("#cp").textContent = "Selecione o resumo e copie";
-          }
         };
         $("#dl").onclick = doDownload;
       });
