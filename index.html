@@ -735,11 +735,8 @@
             .slice(0, 40) || "ficha"
         );
       }
-      function buildMsg(title, nome, data) {
-        return `Olá, equipe Movi! Segue minha ficha ${title} preenchida.%0A%0ANome: ${nome}%0AData: ${data}%0A%0AAs respostas completas vão no arquivo em anexo (tabela). Obrigado!`;
-      }
       function buildMsgText(title, nome, data) {
-        return `Olá, equipe Movi! Segue minha ficha ${title} preenchida.\n\nNome: ${nome}\nData: ${data}\n\nAs respostas completas vão no arquivo em anexo (tabela). Obrigado!`;
+        return `Olá, equipe Movi! Segue minha ficha ${title} preenchida.`;
       }
       function sectionsWithValues() {
         // [[tituloSecao, [[rotulo, valor]]]]
@@ -879,47 +876,49 @@
               fileToShare = txtFile;
           }
         } catch {}
+        // Opção 2: msg COMPLETA (msg curta + todas as respostas) via link do WhatsApp
         const wa = WHATS
           ? `https://wa.me/${WHATS}?text=${encodeURIComponent(waText)}`
           : `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
-        // NÃO compartilha/open automático no submit (o await derruba o gesto e o popup é bloqueado).
-        // Fluxo em 2 toques: 1) botão verde compartilha o DOC em tabela; 2) link abre WhatsApp com a mensagem.
-        // Tenta msg de olá + DOC juntos: files + text (vira legenda no WhatsApp em muito celular).
-        // Se o navegador rejeitar o combo, tenta só files.
-        const tryShare = async () => {
+        // Opção 1: msg CURTA + DOC juntos (texto curto tem bem mais chance de ir como legenda).
+        // Chamada síncrona dentro do clique, tentativa única (retry pós-await perde o gesto -> NotAllowedError).
+        let shareErr = "";
+        const doShareSync = (onOk, onFail) => {
           if (!fileToShare) {
-            shareErr = `sem suporte a arquivo (canShare=${!!navigator.canShare}). No PC use Baixar .doc + anexar manual. No celular abra em HTTPS.`;
-            return false;
+            shareErr = `sem suporte a arquivo neste navegador. No PC use Baixar .doc + anexar manual. No celular abra em HTTPS.`;
+            onFail && onFail();
+            return;
           }
+          let p;
           try {
-            await navigator.share({
+            p = navigator.share({
               files: [fileToShare],
               title: `Ficha ${title} - ${nome}`,
               text: msgText,
             });
-            shareErr = "";
-            return true;
-          } catch (err1) {
-            // combo rejeitado ou cancelado — tenta só o arquivo
-            if (err1 && err1.name === "AbortError") {
-              shareErr = "compartilhamento cancelado";
-              return false;
-            }
-            try {
-              await navigator.share({
-                files: [fileToShare],
-                title: `Ficha ${title} - ${nome}`,
-              });
-              shareErr = "enviado sem legenda (navegador barrou texto+arquivo) — use o botão 2 p/ mandar a msg";
-              return true;
-            } catch (err) {
+          } catch (err) {
+            shareErr =
+              ((err && err.name) || "erro") +
+              ": " +
+              ((err && err.message) || "");
+            console.warn(err);
+            onFail && onFail();
+            return;
+          }
+          if (p && p.then) {
+            p.then(() => {
+              shareErr = "";
+              onOk && onOk();
+            }).catch((err) => {
               shareErr =
                 ((err && err.name) || "erro") +
                 ": " +
                 ((err && err.message) || "");
-              console.warn(err1, err);
-              return false;
-            }
+              console.warn(err);
+              onFail && onFail();
+            });
+          } else {
+            onOk && onOk();
           }
         };
         const doDownload = async () => {
@@ -938,28 +937,27 @@
         };
         $("#done").innerHTML =
           `<div class="card"><h2>Ficha pronta — envie em 2 toques ✓</h2>
-  <div class="msg ok"><b>Passo 1:</b> toque no botão verde para enviar o <b>DOC em tabela (${esc(fileToShare ? fileToShare.name : fname)}) + msg de olá</b> pelo WhatsApp (a msg vai como legenda quando o celular permite).<br><b>Passo 2:</b> se a legenda não for, toque em <b>2. Enviar mensagem</b>.</div>
-  <div class="msg"><b>Mensagem que vai junto:</b><br>${esc(msgText).replace(/\n/g, "<br>")}</div>
-  <button class="btn wa" id="share">1. Enviar DOC em tabela</button><a class="btn wa" id="sendMsg" href="${wa}" target="_blank" rel="noopener">2. Enviar mensagem</a><button class="btn alt" id="dl">Baixar .doc</button><button class="btn alt" id="cp">Copiar mensagem</button>
-  <details open><summary>Ver respostas em tabela</summary>${secs.map((s) => `<h3 style="color:var(--acc);margin:12px 0 4px">${esc(s[0])}</h3>${rowsToTable(s[1])}`).join("")}</details><p class="note">Diagnóstico: ${esc(fileToShare ? "pronto p/ compartilhar: " + fileToShare.name : shareErr || "sem arquivo")} · salvos no app: ${saved ? "sim" : "não"}</p></div>`;
+  <div class="msg ok"><b>Opção 1:</b> msg curta + <b>DOC em tabela (${esc(fileToShare ? fileToShare.name : fname)})</b> juntos (a msg vai como legenda).<br><b>Opção 2:</b> msg <b>completa</b> com todas as respostas, sem arquivo.</div>
+  <div class="msg"><b>Opção 1 (curta):</b><br>${esc(msgText)}</div>
+  <button class="btn wa" id="share">1. Enviar msg curta + DOC</button><a class="btn wa" id="sendMsg" href="${wa}" target="_blank" rel="noopener">2. Enviar msg completa</a><button class="btn alt" id="dl">Baixar .doc</button><button class="btn alt" id="cp">Copiar completa</button>
+  <details close><summary>Ver respostas em tabela</summary>${secs.map((s) => `<h3 style="color:var(--acc);margin:12px 0 4px">${esc(s[0])}</h3>${rowsToTable(s[1])}`).join("")}</details><p class="note">Diagnóstico: ${esc(fileToShare ? "pronto p/ compartilhar: " + fileToShare.name : shareErr || "sem arquivo")} · salvos no app: ${saved ? "sim" : "não"}</p></div>`;
         $("#done").scrollIntoView({ behavior: "smooth" });
-        $("#share").onclick = async () => {
-          const ok = await tryShare();
-          if (ok) {
-            $("#share").textContent = "DOC + msg compartilhados ✓";
-            if (shareErr) alert(shareErr);
-            else {
+        $("#share").onclick = () => {
+          doShareSync(
+            () => {
+              $("#share").textContent = "Msg curta + DOC compartilhados ✓";
               try {
-                await navigator.clipboard.writeText(msgText);
+                navigator.clipboard.writeText(msgText);
               } catch {}
-            }
-          } else {
-            alert(
-              "Não deu p/ anexar automático: " +
-                shareErr +
-                "\nToque em Baixar .doc e anexe manual no WhatsApp.",
-            );
-          }
+            },
+            () => {
+              alert(
+                "Não deu p/ anexar automático: " +
+                  shareErr +
+                  "\nToque em Baixar .doc e anexe manual no WhatsApp.",
+              );
+            },
+          );
         };
         $("#cp").onclick = async () => {
           try {
