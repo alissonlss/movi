@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Movi kids + idosos | Ficha de cadastro e anamnese</title>
+    <style>
+      :root {
+        --bg: #faf8fc;
+        --card: #fff;
+        --tx: #222;
+        --mut: #666;
+        --bd: #d9d4e2;
+        --pu: #732296;
+        --pk: #f50a64;
+        --te: #00877b;
+        --ye: #fdaa0a;
+        --bl: #0b4daf;
+        --acc: var(--pu);
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #17131d;
+          --card: #221c2b;
+          --tx: #f1eef5;
+          --mut: #aaa3b5;
+          --bd: #403751;
+          --pu: #b36ad6;
+          --te: #27c2b3;
+          --bl: #6fa3ff;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #17131d;
+        --card: #221c2b;
+        --tx: #f1eef5;
+        --mut: #aaa3b5;
+        --bd: #403751;
+        --pu: #b36ad6;
+        --te: #27c2b3;
+        --bl: #6fa3ff;
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--tx);
+        font:
+          16px/1.45 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          Arial,
+          sans-serif;
+      }
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      h1 {
+        text-align: center;
+        margin: 8px 0 2px;
+        font-size: 2.4rem;
+        letter-spacing: 1px;
+      }
+      h1 b:nth-child(1) {
+        color: var(--pu);
+      }
+      h1 b:nth-child(2) {
+        color: var(--pk);
+      }
+      h1 b:nth-child(3) {
+        color: var(--te);
+      }
+      h1 b:nth-child(4) {
+        color: var(--ye);
+      }
+      .sub {
+        text-align: center;
+        color: var(--bl);
+        margin: 0 0 14px;
+        font-weight: 600;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin: 12px 0;
+      }
+      .tabs button {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid var(--bd);
+        background: var(--card);
+        color: var(--tx);
+        border-radius: 12px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .tabs button.on {
+        color: #fff;
+        border-color: transparent;
+      }
+      .tabs button[data-k="kids"].on {
+        background: var(--pu);
+      }
+      .tabs button[data-k="idosos"].on {
+        background: var(--te);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--bd);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin: 14px 0;
+      }
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 1.05rem;
+        color: var(--acc);
+        border-bottom: 3px solid var(--acc);
+        padding-bottom: 6px;
+      }
+      label,
+      legend {
+        display: block;
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-top: 12px;
+      }
+      fieldset {
+        border: 0;
+        padding: 0;
+        margin: 0;
+      }
+      input[type="text"],
+      input[type="tel"],
+      input[type="email"],
+      input[type="date"],
+      textarea {
+        width: 100%;
+        margin-top: 4px;
+        padding: 10px;
+        border: 1px solid var(--bd);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--tx);
+        font: inherit;
+      }
+      textarea {
+        min-height: 70px;
+      }
+      .opts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        margin-top: 4px;
+      }
+      .opts label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        font-weight: 400;
+      }
+      .opts input {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--acc);
+      }
+      .fu {
+        display: none;
+        margin-top: 6px;
+      }
+      .fu.show {
+        display: block;
+      }
+      .btn {
+        display: inline-block;
+        padding: 13px 18px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--acc);
+        color: #fff;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        margin: 4px 6px 4px 0;
+        text-decoration: none;
+      }
+      .btn.alt {
+        background: transparent;
+        color: var(--bl);
+        border: 2px solid var(--bl);
+      }
+      .btn.wa {
+        background: #1a9c4a;
+      }
+      .msg {
+        padding: 12px;
+        border-radius: 10px;
+        margin: 10px 0;
+        background: var(--bg);
+        border: 1px solid var(--bd);
+      }
+      .ok {
+        border-color: var(--te);
+      }
+      pre {
+        white-space: pre-wrap;
+        font:
+          13px/1.4 ui-monospace,
+          Menlo,
+          Consolas,
+          monospace;
+        background: var(--bg);
+        border: 1px solid var(--bd);
+        border-radius: 8px;
+        padding: 10px;
+        max-height: 300px;
+        overflow: auto;
+      }
+      small,
+      .note {
+        color: var(--mut);
+        font-size: 0.85rem;
+      }
+      .req {
+        color: var(--pk);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1><b>M</b><b>O</b><b>V</b><b>I</b></h1>
+      <p class="sub">kids + idosos · Ficha de cadastro e anamnese</p>
+      <p class="note" style="text-align: center">
+        + Movimento, + Diversão, + Saúde, + Conquistas!
+      </p>
+      <div class="tabs">
+        <button data-k="kids" class="on">Movi Kids (criança)</button
+        ><button data-k="idosos">Movi Idosos</button>
+      </div>
+      <form id="f" novalidate>
+        <div id="root"></div>
+        <p class="note">
+          Campos com <span class="req">*</span> são obrigatórios. Seus dados são
+          usados apenas para o atendimento no projeto Movi.
+        </p>
+        <button class="btn" type="submit">Enviar ficha</button>
+      </form>
+      <div id="done"></div>
+      <div id="adm"></div>
+    </main>
+    <script>
+      const SIM = ["Sim", "Não"];
+      const F = {
+        kids: [
+          [
+            "1. Dados da criança",
+            [
+              ["t", "Nome completo da criança*"],
+              ["dt", "Data de nascimento*"],
+              ["s", "Sexo", ["Feminino", "Masculino"]],
+              ["t", "Escola"],
+              ["t", "Série/ano e turno"],
+            ],
+          ],
+          [
+            "2. Responsáveis e contatos",
+            [
+              ["t", "Responsável principal*"],
+              ["t", "Parentesco*"],
+              ["tel", "Telefone/WhatsApp*"],
+              ["email", "E-mail"],
+              ["t", "Profissão do responsável"],
+              ["t", "Contato de emergência (nome e telefone)*"],
+              ["t", "Pessoas autorizadas a buscar a criança"],
+            ],
+          ],
+          [
+            "3. Histórico de saúde",
+            [
+              [
+                "c",
+                "A criança tem ou já teve:",
+                [
+                  "Asma/bronquite",
+                  "Alergias",
+                  "Problemas cardíacos",
+                  "Epilepsia/convulsões",
+                  "Diabetes",
+                  "Obesidade/sobrepeso",
+                  "TDAH",
+                  "Autismo (TEA)",
+                  "Atraso no desenvolvimento",
+                  "Problemas de postura/coluna",
+                  "Pé plano",
+                  "Dores nas pernas/articulações",
+                  "Usa óculos",
+                  "Problemas de audição",
+                  "Problemas respiratórios frequentes",
+                ],
+              ],
+              ["t", "Alergias (alimentos, medicamentos, picadas, látex)"],
+              ["y", "Algum médico já restringiu atividades físicas?"],
+              [
+                "y",
+                "Sente cansaço excessivo, falta de ar, tontura ou dor no peito ao brincar?",
+              ],
+              [
+                "y",
+                "Faz acompanhamento (pediatra, fono, psicólogo, TO, fisio)?",
+              ],
+              ["a", "Medicamentos em uso (nome, dose, horário, para quê)"],
+              ["y", "Já teve fraturas, entorses, cirurgias ou internações?"],
+              ["y", "Tem alguma dor ou lesão atual?"],
+              [
+                "y",
+                "Percebe dificuldade de coordenação, equilíbrio ou quedas frequentes?",
+              ],
+            ],
+          ],
+          [
+            "4. Experiência e rotina",
+            [
+              ["y", "Já praticou esporte ou atividade física orientada?"],
+              ["y", "Pratica atividade física atualmente?"],
+              [
+                "s",
+                "Participa das aulas de Educação Física?",
+                ["Sempre", "Às vezes", "Raramente", "Nunca"],
+              ],
+              [
+                "s",
+                "Brinca ativamente fora de casa?",
+                ["Todos os dias", "Algumas vezes por semana", "Raramente"],
+              ],
+              ["t", "Tempo de telas por dia (TV/celular/jogos)"],
+              ["t", "Horas de sono por noite"],
+              [
+                "c",
+                "Perfil da criança",
+                [
+                  "Tímida(o)",
+                  "Agitada(o)",
+                  "Calma(o)",
+                  "Sociável",
+                  "Prefere brincar sozinha(o)",
+                  "Tem medo de errar",
+                  "Cansa-se rápido",
+                  "Dificuldade de seguir regras",
+                ],
+              ],
+              ["a", "Do que a criança mais gosta de brincar?"],
+              ["a", "O que a incomoda ou não gosta?"],
+              [
+                "y",
+                "Precisa de alguma adaptação ou cuidado especial nas aulas?",
+              ],
+            ],
+          ],
+          [
+            "5. Objetivos",
+            [
+              [
+                "c",
+                "O que esperam do Movi Kids?",
+                [
+                  "Gastar energia",
+                  "Melhorar coordenação",
+                  "Socializar/fazer amigos",
+                  "Ganhar confiança",
+                  "Melhorar postura",
+                  "Hábitos saudáveis",
+                  "Controle de peso",
+                  "Reduzir tempo de tela",
+                  "Diversão/lazer",
+                ],
+              ],
+              ["a", "Expectativa em uma frase"],
+            ],
+          ],
+          [
+            "6. Autorizações",
+            [
+              [
+                "s",
+                "Autorizo o uso de imagem (fotos/vídeos) para divulgação do projeto*",
+                SIM,
+              ],
+              [
+                "s",
+                "Autorizo primeiros socorros e contato com serviço de emergência, se necessário*",
+                SIM,
+              ],
+              [
+                "k",
+                "Declaro que as informações são verdadeiras e que a criança está apta a atividades físicas leves e recreativas. Avisarei sobre qualquer alteração de saúde.*",
+              ],
+            ],
+          ],
+        ],
+        idosos: [
+          [
+            "1. Dados pessoais",
+            [
+              ["t", "Nome completo*"],
+              ["dt", "Data de nascimento*"],
+              ["s", "Sexo", ["Feminino", "Masculino"]],
+              ["tel", "Telefone/WhatsApp*"],
+              ["t", "Endereço/bairro"],
+              ["t", "Escolaridade"],
+              ["t", "Profissão (atual ou anterior)"],
+              ["s", "Situação", ["Aposentado(a)", "Trabalha", "Outro"]],
+              ["s", "Mora com", ["Sozinho(a)", "Cônjuge", "Filhos", "Outros"]],
+              ["t", "Contato de emergência (nome, parentesco, telefone)*"],
+              ["t", "Médico(a) de referência e telefone/unidade"],
+            ],
+          ],
+          [
+            "2. Histórico de saúde",
+            [
+              [
+                "c",
+                "Possui ou já teve:",
+                [
+                  "Hipertensão",
+                  "Diabetes",
+                  "Problemas cardíacos",
+                  "AVC (derrame)",
+                  "Osteoporose/osteopenia",
+                  "Artrose/artrite",
+                  "Problemas de coluna",
+                  "Doença de Parkinson",
+                  "Problemas respiratórios",
+                  "Depressão/ansiedade",
+                  "Labirintite/tontura",
+                  "Incontinência urinária",
+                  "Problemas de visão",
+                  "Problemas de audição",
+                  "Câncer",
+                ],
+              ],
+              ["a", "Outras condições de saúde"],
+              [
+                "y",
+                "Sente dor atualmente? (informe onde e a intensidade de 0 a 10)",
+              ],
+              [
+                "c",
+                "Limitações no dia a dia",
+                [
+                  "Caminhar",
+                  "Subir/descer escadas",
+                  "Levantar da cadeira",
+                  "Agachar",
+                  "Levantar os braços",
+                  "Segurar objetos",
+                  "Manter-se em pé",
+                  "Deitar/levantar do chão",
+                ],
+              ],
+              [
+                "c",
+                "Usa algum auxílio?",
+                [
+                  "Bengala",
+                  "Andador",
+                  "Cadeira de rodas",
+                  "Óculos",
+                  "Aparelho auditivo",
+                  "Prótese",
+                ],
+              ],
+              ["a", "Medicamentos em uso (nome, dose, horário, para quê)"],
+              ["t", "Pressão arterial habitual / última consulta médica"],
+              [
+                "s",
+                "Possui liberação médica para atividade física?",
+                ["Sim", "Não", "Preciso solicitar"],
+              ],
+              ["y", "Já fez cirurgias (coração, joelho, quadril, coluna...)?"],
+              ["y", "Já teve fraturas ou lesões importantes?"],
+            ],
+          ],
+          [
+            "3. Quedas e equilíbrio",
+            [
+              [
+                "y",
+                "Sofreu queda nos últimos 12 meses? (informe quantas, onde e consequências)",
+              ],
+              ["s", "Tem medo de cair?", ["Muito", "Um pouco", "Não"]],
+              ["y", "Sente tontura ao levantar-se ou virar a cabeça?"],
+              ["y", "Sente pés ou pernas formigando/dormentes?"],
+              ["y", "Tem dificuldade para manter o equilíbrio?"],
+              ["y", "Já precisou de ajuda para levantar depois de uma queda?"],
+            ],
+          ],
+          [
+            "4. Atividade física e rotina",
+            [
+              ["y", "Já praticou atividade física ou esporte na vida?"],
+              [
+                "y",
+                "Pratica atividade física atualmente? (qual e quantas vezes por semana)",
+              ],
+              [
+                "s",
+                "Nível de atividade no dia a dia",
+                ["Sedentário", "Pouco ativo", "Ativo", "Muito ativo"],
+              ],
+              [
+                "c",
+                "Durante esforço, já sentiu:",
+                [
+                  "Dor ou aperto no peito",
+                  "Falta de ar excessiva",
+                  "Tontura ou desmaio",
+                  "Palpitações",
+                  "Dor nas articulações",
+                  "Nenhum desses",
+                ],
+              ],
+              [
+                "c",
+                "Consegue sozinho(a):",
+                [
+                  "Tomar banho",
+                  "Vestir-se",
+                  "Cozinhar",
+                  "Fazer compras",
+                  "Usar transporte",
+                  "Cuidar dos medicamentos",
+                ],
+              ],
+              ["t", "Horas de sono por noite"],
+              ["t", "Água por dia / tabagismo / álcool"],
+              [
+                "s",
+                "Alimenta-se bem e regularmente?",
+                ["Sim", "Não", "Mais ou menos"],
+              ],
+            ],
+          ],
+          [
+            "5. Aspectos sociais e emocionais",
+            [
+              ["s", "Gosta de atividades em grupo?", ["Sim", "Não", "Depende"]],
+              [
+                "s",
+                "Sente-se sozinho(a) com frequência?",
+                ["Sim", "Não", "Às vezes"],
+              ],
+              ["y", "Percebe dificuldade de memória ou concentração?"],
+              ["a", "Quais atividades lhe dão prazer?"],
+              ["a", "O que NÃO gostaria de fazer nas aulas?"],
+            ],
+          ],
+          [
+            "6. Objetivos",
+            [
+              [
+                "c",
+                "O que espera do Movi Idosos?",
+                [
+                  "Melhorar o equilíbrio",
+                  "Prevenir quedas",
+                  "Ganhar força",
+                  "Mais mobilidade",
+                  "Reduzir dores",
+                  "Mais disposição",
+                  "Fazer amizades",
+                  "Melhorar o humor",
+                  "Manter a autonomia",
+                  "Cuidar da saúde",
+                  "Lazer/diversão",
+                ],
+              ],
+              ["a", "Expectativa em uma frase"],
+            ],
+          ],
+          [
+            "7. Termo de ciência e autorizações",
+            [
+              [
+                "s",
+                "Autorizo o uso de imagem (fotos/vídeos) para divulgação do projeto*",
+                SIM,
+              ],
+              [
+                "s",
+                "Autorizo contato com meu contato de emergência e serviço de socorro, se necessário*",
+                SIM,
+              ],
+              [
+                "k",
+                "Declaro que as informações são verdadeiras e estou ciente de que as atividades serão adaptadas às minhas condições. Avisarei sobre qualquer desconforto ou mudança de saúde.*",
+              ],
+            ],
+          ],
+        ],
+      };
+      let K = "kids";
+      const $ = (s) => document.querySelector(s),
+        esc = (s) =>
+          String(s).replace(
+            /[&<>"]/g,
+            (c) =>
+              ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+          );
+      const clean = (l) => l.replace(/\*$/, ""),
+        isReq = (l) => l.endsWith("*"),
+        req = (l) => (isReq(l) ? ' <span class="req">*</span>' : "");
+      function field(f, id) {
+        const [t, l, o] = f,
+          L = esc(clean(l));
+        if (t == "t" || t == "tel" || t == "email" || t == "dt")
+          return `<label>${L}${req(l)}<input id="${id}" type="${t == "t" ? "text" : t == "dt" ? "date" : t}" ${isReq(l) ? "required" : ""}></label>`;
+        if (t == "a")
+          return `<label>${L}<textarea id="${id}"></textarea></label>`;
+        if (t == "s" || t == "c" || t == "y") {
+          const ty = t == "c" ? "checkbox" : "radio",
+            op = t == "y" ? SIM : o;
+          let h = `<fieldset data-id="${id}"><legend>${L}${req(l)}</legend><div class="opts">${op.map((v) => `<label><input type="${ty}" name="${id}" value="${esc(v)}">${esc(v)}</label>`).join("")}</div>`;
+          if (t == "y")
+            h += `<div class="fu" id="${id}-fu"><input type="text" id="${id}-t" placeholder="Se sim, descreva"></div>`;
+          return h + "</fieldset>";
+        }
+        if (t == "k")
+          return `<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input type="checkbox" id="${id}" required style="width:22px;height:22px;margin-top:2px;accent-color:var(--acc)"><span>${esc(clean(l))} <span class="req">*</span></span></label>`;
+      }
+      function render() {
+        document.documentElement.style.setProperty(
+          "--acc",
+          K == "kids" ? "var(--pu)" : "var(--te)",
+        );
+        $("#root").innerHTML = F[K].map(
+          ([t, fs], si) =>
+            `<section class="card"><h2>${t}</h2>${fs.map((f, i) => field(f, `${K}-${si}-${i}`)).join("")}</section>`,
+        ).join("");
+        document
+          .querySelectorAll(".tabs button")
+          .forEach((b) => b.classList.toggle("on", b.dataset.k == K));
+        $("#done").innerHTML = "";
+      }
+      document.addEventListener("change", (e) => {
+        const fs = e.target.closest("fieldset[data-id]");
+        if (fs) {
+          const fu = document.getElementById(fs.dataset.id + "-fu");
+          if (fu)
+            fu.classList.toggle(
+              "show",
+              e.target.value == "Sim" && e.target.checked,
+            );
+        }
+      });
+      document.querySelectorAll(".tabs button").forEach(
+        (b) =>
+          (b.onclick = () => {
+            K = b.dataset.k;
+            render();
+          }),
+      );
+      function collect() {
+        const out = [];
+        F[K].forEach(([t, fs], si) =>
+          fs.forEach((f, i) => {
+            const id = `${K}-${si}-${i}`,
+              [ty, l] = f;
+            let v = "";
+            if (
+              ty == "t" ||
+              ty == "tel" ||
+              ty == "email" ||
+              ty == "dt" ||
+              ty == "a"
+            ) {
+              v = document.getElementById(id).value.trim();
+              if (ty == "dt" && v) v = v.split("-").reverse().join("/");
+            } else if (ty == "c")
+              v = [...document.querySelectorAll(`input[name="${id}"]:checked`)]
+                .map((x) => x.value)
+                .join(", ");
+            else if (ty == "s" || ty == "y") {
+              const r = document.querySelector(`input[name="${id}"]:checked`);
+              v = r ? r.value : "";
+              if (ty == "y" && v == "Sim") {
+                const d = document.getElementById(id + "-t").value.trim();
+                if (d) v += " — " + d;
+              }
+            } else if (ty == "k")
+              v = document.getElementById(id).checked ? "Sim, declarado" : "";
+            out.push([clean(l), v]);
+          }),
+        );
+        return out;
+      }
+      function missingRadios() {
+        for (const [si, [t, fs]] of F[K].entries())
+          for (const [i, f] of fs.entries())
+            if (
+              f[0] == "s" &&
+              isReq(f[1]) &&
+              !document.querySelector(`input[name="${K}-${si}-${i}"]:checked`)
+            ) {
+              const e = document.querySelector(`[data-id="${K}-${si}-${i}"]`);
+              e.scrollIntoView({ block: "center" });
+              return clean(f[1]);
+            }
+        return null;
+      }
+      const WHATS = ""; // AJUSTE PADRÃO: coloque o número do Movi com DDI, ex. "5587999999999". Se vazio, abre o seletor do WhatsApp.
+      function safeName(s) {
+        return (
+          (s || "ficha")
+            .normalize("NFD")
+            .replace(/[̀-ͯ]/g, "")
+            .replace(/[^\w\-]+/g, "-")
+            .replace(/-+/g, "-")
+            .replace(/^-|-$/g, "")
+            .slice(0, 40) || "ficha"
+        );
+      }
+      function buildDoc(title, nome, data, rows) {
+        const rs = rows
+          .filter((x) => x[1])
+          .map(
+            (x) =>
+              `<tr><td style="border:1px solid #999;padding:6px;font-weight:bold;width:35%">${esc(x[0])}</td><td style="border:1px solid #999;padding:6px">${esc(x[1])}</td></tr>`,
+          )
+          .join("");
+        return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Ficha ${esc(title)} - ${esc(nome)}</title></head><body><h1>FICHA ${esc(title)} - ${esc(data)}</h1><p><b>Nome:</b> ${esc(nome)}</p><table style="border-collapse:collapse;width:100%">${rs}</table><p>Movi kids + idosos · + Movimento, + Diversão, + Saúde, + Conquistas!</p></body></html>`;
+      }
+      function downloadBlob(blob, filename) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(a.href);
+          a.remove();
+        }, 1500);
+      }
+      $("#f").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!$("#f").reportValidity()) return;
+        const m = missingRadios();
+        if (m) {
+          alert("Responda: " + m);
+          return;
+        }
+        const d = collect(),
+          title = K == "kids" ? "MOVI KIDS" : "MOVI IDOSOS",
+          nome = d[0][1] || "ficha",
+          data = new Date().toLocaleDateString("pt-BR");
+        const txt =
+          `FICHA ${title} - ${data}\n\n` +
+          d
+            .filter((x) => x[1])
+            .map((x) => `${x[0]}: ${x[1]}`)
+            .join("\n");
+        let saved = false;
+        try {
+          if (typeof claude !== "undefined") {
+            const db = await claude.use("db"),
+              u = await claude.use("user");
+            if (db && u) {
+              const ref = db.doc("respostas/" + (await u.id())),
+                rec = {
+                  ["f" + Date.now()]: {
+                    ficha: K,
+                    nome,
+                    texto: txt,
+                    criadoEm: Date.now(),
+                  },
+                };
+              try {
+                await ref.update(rec);
+              } catch {
+                await ref.set(rec);
+              }
+              saved = true;
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+        const docHtml = buildDoc(title, nome, data, d),
+          blob = new Blob(["﻿" + docHtml], { type: "application/msword" }),
+          fname = `ficha-movi-${K}-${safeName(nome)}.doc`;
+        // .txt tem compatibilidade maior com canShare em celular; mantém .doc p/ download
+        const txtBlob = new Blob([txt], { type: "text/plain" }),
+          txtFname = fname.replace(/\.doc$/i, ".txt"),
+          txtFile = new File([txtBlob], txtFname, { type: "text/plain" });
+        const docFile = new File([blob], fname, {
+          type: "application/msword",
+        });
+        // prefere .txt (aceito em mais celulares), senão .doc
+        let fileToShare = null;
+        try {
+          if (navigator.canShare) {
+            if (navigator.canShare({ files: [txtFile] })) fileToShare = txtFile;
+            else if (navigator.canShare({ files: [docFile] }))
+              fileToShare = docFile;
+          }
+        } catch {}
+        const wa = WHATS
+          ? `https://wa.me/${WHATS}?text=${encodeURIComponent(txt)}`
+          : `https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}`;
+        // 1) Tenta enviar o arquivo direto pelo compartilhamento (só funciona em celular + HTTPS/localhost, com gesto do usuário)
+        // OBS: não envia text junto com files (alguns Chrome/Safari rejeitam) — só files + title
+        let shared = false,
+          shareErr = "";
+        const tryShare = async () => {
+          if (!fileToShare) {
+            shareErr = `sem suporte: canShare=${!!navigator.canShare} share=${!!navigator.share} (abra em HTTPS no celular)`;
+            return false;
+          }
+          try {
+            await navigator.share({
+              files: [fileToShare],
+              title: `Ficha ${title} - ${nome}`,
+            });
+            return true;
+          } catch (err) {
+            shareErr =
+              ((err && err.name) || "erro") +
+              ": " +
+              ((err && err.message) || "");
+            if (err && err.name === "AbortError") return false; // cancelado, não é sucesso
+            console.warn(err);
+            return false;
+          }
+        };
+        shared = await tryShare();
+        // 2) Fallback PC/navegador sem share de arquivos: abre WhatsApp com texto (não dá p/ anexar via link)
+        if (!shared) {
+          try {
+            window.open(wa, "_blank", "noopener");
+          } catch {}
+        }
+        const doDownload = async () => {
+          try {
+            if (typeof claude !== "undefined") {
+              const dls = await claude.use("downloads");
+              if (dls) {
+                await dls.save({ filename: fname, data: docHtml });
+                return;
+              }
+            }
+            downloadBlob(blob, fname);
+          } catch {
+            downloadBlob(blob, fname);
+          }
+        };
+        $("#done").innerHTML =
+          `<div class="card"><h2>${shared || saved ? "Ficha enviada! ✓" : "Enviar ficha pelo WhatsApp"}</h2>
+  <div class="msg ok">${shared ? `Documento <b>${esc(fileToShare ? fileToShare.name : fname)}</b> compartilhado de <b>${esc(nome)}</b>. Escolha o WhatsApp na lista.` : `Não foi possível anexar automaticamente (${esc(shareErr || "navegador sem share de arquivos")}).<br>No <b>celular com HTTPS</b> o botão verde anexa o arquivo. No <b>PC / arquivo local file://</b> só vai texto — baixe e anexe manualmente.`}</div>
+  <button class="btn wa" id="share">Enviar arquivo pelo WhatsApp</button><a class="btn alt" href="${wa}" target="_blank" rel="noopener">Abrir WhatsApp (só texto)</a><button class="btn alt" id="dl">Baixar .doc</button><button class="btn alt" id="cp">Copiar</button>
+  <details><summary>Ver resumo</summary><pre>${esc(txt)}</pre></details><p class="note">Diagnóstico: ${esc(shareErr || (shared ? "compartilhado" : "sem erro"))} · arquivo: ${esc(fileToShare ? fileToShare.name + " (" + fileToShare.type + ")" : "nenhum suportado")}</p></div>`;
+        $("#done").scrollIntoView({ behavior: "smooth" });
+        $("#share").onclick = async () => {
+          if (await tryShare()) {
+            $("#share").textContent = "Compartilhado ✓";
+          } else if (!fileToShare) {
+            alert(
+              "Este navegador/PC não suporta envio de arquivo. Abra o link em HTTPS no celular. Abrindo WhatsApp com texto...",
+            );
+            window.open(wa, "_blank", "noopener");
+          } else {
+            alert("Não compartilhou: " + shareErr);
+          }
+        };
+        $("#cp").onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(txt);
+            $("#cp").textContent = "Copiado ✓";
+          } catch {
+            $("#cp").textContent = "Selecione o resumo e copie";
+          }
+        };
+        $("#dl").onclick = doDownload;
+      });
+      async function admin() {
+        try {
+          const u = await claude.use("user"),
+            db = await claude.use("db");
+          if (!db || !(u && u.isOwner())) return;
+          db.collection("respostas")
+            .orderBy("criadoEm", "desc")
+            .onSnapshot((s) => {
+              $("#adm").innerHTML =
+                `<div class="card"><h2>Respostas recebidas — visível só para o responsável</h2>` +
+                (s.empty
+                  ? "<p class=note>Nenhuma resposta ainda.</p>"
+                  : s.docs
+                      .flatMap((x) => Object.values(x.data() || {}))
+                      .sort((p, q) => q.criadoEm - p.criadoEm)
+                      .map((v) => {
+                        return `<details><summary><b>${esc(v.nome || "Sem nome")}</b> · ${v.ficha == "kids" ? "Kids" : "Idosos"} · ${new Date(v.criadoEm).toLocaleDateString("pt-BR")}</summary><pre>${esc(v.texto)}</pre></details>`;
+                      })
+                      .join("")) +
+                "</div>";
+            });
+        } catch (e) {}
+      }
+      render();
+      admin();
+    </script>
+  </body>
+</html>
